@@ -3,6 +3,36 @@ body {
   /*background: #eee;*/
 }
 
+#settings {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 20px 0;
+}
+
+#settings label {
+  font-size: 20px;
+  font-weight: bold;
+  margin-right: 10px;
+  font-family: "Microsoft YaHei Light";
+}
+
+#settings input {
+  width: 60px;
+  height: 30px;
+  font-size: 18px;
+  text-align: center;
+  border: 2px solid #ccc;
+  border-radius: 5px;
+  padding: 5px;
+  font-family: "Microsoft YaHei Light";
+}
+
+#settings input::-webkit-inner-spin-button {
+  width: 20px;
+  height: 20px;
+}
+
 ul li {
   list-style: none;
 }
@@ -20,8 +50,7 @@ ul li {
   height: 500px;
 }
 
-#balls li,
-#lucky-balls li {/*球体样式*/
+#balls li{/*球体样式*/
   position: absolute;
   left: 420px;
   top: 470px;
@@ -39,8 +68,8 @@ ul li {
   word-break: keep-all;
   cursor: pointer;
 }
-#balls li .company,
-#lucky-balls li .company{
+#balls li .NT,
+#lucky-balls li .NT{
   font-size:12px;
   line-height: 14px;
   margin-bottom: 0;
@@ -53,7 +82,7 @@ ul li {
   margin-top: 5px;
 }
 
-#balls li.selected .company{
+#balls li.selected .NT{
   font-size:30px;
   line-height: 35px;
   margin-bottom: 0;
@@ -98,24 +127,30 @@ nav a {
 }
 
 #lucky-balls {
-  padding: 10px 20px 20px 20px;
-  margin: 0px 0 10px 0;
-  list-style: none;
-  overflow: hidden;
-  zoom:1;
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
 }
 
 #lucky-balls li {
-  position: relative;
-  left: auto !important;
-  top: auto !important;
-  width: 60px !important;
-  height: 60px !important;
-  float: left;
-  margin: 5px 10px;
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 10px;
+  border-bottom: 1px solid #ccc;
+  font-size: 16px;
+}
+
+#lucky-balls li p {
+  margin: 0;
+  font-size: 14px;
+}
+
+#lucky-balls li .NT {
   font-weight: bold;
-  color: #fff;
-  background: #e21536;
+}
+
+#lucky-balls li .name {
+  color: #555;
 }
 
 /*new*/

@@ -1,9 +1,6 @@
 # lottery-tool
-简单的抽奖系统，可指定抽奖名单
-## 项目演示地址：
-https://54runoob.github.io/lottery-tool/index.html
-## 设置总的抽奖名单
-修改：/js/data/data-apper.js文件和/js/data/data-lucky.js文件;
-## 设置中奖名单（注意：中奖顺序会逆序抽出）
-修改: /js/data/data-lucky.js文件即可
-## 如果抽奖次数>中奖名单人数，则后面的抽奖将随机抽出
+双色球形式的抽奖系统，支持设置抽奖名单和中奖名单，支持设置抽奖次数，支持设置中奖名单人数，支持设置中奖名单人数后的抽奖随机抽出
+## 主要逻辑编辑
+修改：data-lucky.js文件
+## 抽奖名单解析
+执行：parseExcel.js文件

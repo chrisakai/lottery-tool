@@ -20,13 +20,12 @@ define(function(require, exports, module) {
   var ZOOM_DURATION = 500
   var HIT_SPEED = 100 //球体速度
 
-  var RIGIDITY = 4 // 弹性系数：2 -钢球 4 - 橡胶球，越大越软，建议小于 10
+  var RIGIDITY = 6 // 弹性系数：2 -钢球 4 - 橡胶球，越大越软，建议小于 10
 
-
-  function User(id,name,company, options) {
+  function User(id,name,NT, options) {
     this.id = id
     this.name = name
-    this.company =  company
+    this.NT =  NT
     this.options = options || {}
 
     this.el = null
@@ -46,7 +45,7 @@ define(function(require, exports, module) {
   }
 
   User.prototype.createEl = function() {
-    this.el = $('<li data-id='+ this.id +'><p class="company">' + this.company + '</p><p class="name">' + this.name + '</p></li>').appendTo('#balls')
+    this.el = $('<li data-id='+ this.id +'><p class="name">' + this.name + '</p></li>').appendTo('#balls')
     this.width = this.el.width()
     this.height = this.el.height()
     var colorList = ["#B5FF91","#94DBFF",
@@ -158,15 +157,16 @@ define(function(require, exports, module) {
   module.exports = {
 
     users: [],
+    lotteryCompleted: false,
     init: function(data) {
       this.data = data
-
+      this.lotteryCompleted = false;
       this.users = data.map(function(item) {
-        return new User(item.id,item.name,item.company);
+        return new User(item.id,item.name,item.NT);
       })
 
       this._bindUI()
-
+      this.luckyCount = parseInt(document.querySelector("#num-lucky").value) || 1; // 默认抽取 1 人
       //_util.setStore("ALLLUCKYDATA", _lucky_list) // 把lucky名单存入localStorage去
       //var hasLuckyData = _util.getStore("HASLUCKYDATA")
       //if (hasLuckyData) {
@@ -179,8 +179,17 @@ define(function(require, exports, module) {
     },
 
     _bindUI: function() {
-      var that = this
+      var that = this;
 
+      // 监听抽奖人数变化
+      document.querySelector("#num-lucky").addEventListener("input", function(e) {
+        var value = parseInt(e.target.value);
+        if (value < 1) {
+          e.target.value = 1;
+        } else if (value > users.length) {
+          e.target.value = users.length;
+        }
+      });
       // bind button
       var trigger = document.querySelector('#go');
       var tag = document.querySelector("#handle");
@@ -228,18 +237,18 @@ define(function(require, exports, module) {
         var id = el.data("id")
         console.log(id)
         var name = ""
-        var company = ""
+        var NT = ""
         var options = {}
         that.data.forEach(function(user) {
           if(user.id == id) {
             options = user
             name = user.name
-            company = user.company
+            NT = user.NT
           }
         })
         console.log(options)
         if (!options) {
-          that.addItem(id,name,company, options)
+          that.addItem(id,name,NT, options)
           that.hit()
           el.remove()
         }
@@ -297,13 +306,21 @@ define(function(require, exports, module) {
         window.location.reload();
       });
 
+      // Update the JavaScript in lucky.js
+      document.getElementById('go').addEventListener('click', function() {
+        var winners = Lucky.start();
+        winners.forEach(function(winner) {
+          $("#lucky-balls").append('<li><p class="NT">' + winner.NT + '</p><p class="name">' + winner.name + '</p></li>');
+        });
+      });
+
       // bind keydown
       document.addEventListener('keydown', function(ev) {
         if (ev.keyCode == '32') { // 空格键
           go()
         }
         else if (ev.keyCode == '27') { // ESC按键
-          that.moveLucky()
+          // that.moveLucky()
           $('#lucky-balls li').eq(0).click()
           $("#reference").hide()
         }
@@ -321,58 +338,70 @@ define(function(require, exports, module) {
     },
 
     start: function() {
+      if(this.lotteryCompleted) {
+        alert("抽奖结束！请重置后再抽奖。")
+        return;
+      }
+
       $("#reference").hide()
       this.timer && clearTimeout(this.timer)
       this.moveLucky() // 开始新的一轮抽奖先把已中奖的用户排除
-      if(this.users.length == 0) {
-        alert("抽奖结束！谢谢参与~")
-        return
-      }
+
       this.users.forEach(function(user) {
         user.start()
       })
     },
 
     stop: function() {
+      if(this.lotteryCompleted) {
+        alert("抽奖结束！请重置后再抽奖。")
+        return;
+      }
       var users = this.users;
-      var z = 0;
       if(users&&users.length==0){
+        alert("抽奖结束！谢谢参与~");
         return
       }
       var lucky = users[0];
       var ram = r(0, users.length-1) // 随机数
-      if (users.length>1) {
-        lucky = users[ram] // 初始化随机一个user为lucky用户
-        lucky.el[0].style.zIndex = 100; // 将lucky球体的z-index置为100
-      } else if(users.length ==1) {
-        lucky = users[0]; // 只有一名抽奖用户时不用随机数
-        lucky.el[0].style.zIndex = 100;
-      }
-      console.log(ram);
-      console.log(users);
-      users.forEach(function(user) { //
-        //console.log(user)
-        // if (z < user.zIndex) {
-        for(var i=0;i<_lucky_list.length;i++){
-          if(user.id == _lucky_list[i].id) {
-            lucky = user
-            //z = user.zIndex
-            //user.stop()
-            lucky.el[0].style.zIndex = 100;
-          }
+      var numWinners = parseInt(document.getElementById('num-lucky').value, 10);
+      var winners = [];
+      var selectedIds = new Set();
+      for (var i = 0; i < numWinners; i++) {
+        if (this.users.length === 0) break;
+        var index = Math.floor(Math.random() * this.users.length);
+        var lucky = this.users.splice(index, 1)[0];
+        // Ensure no duplicates
+        while (selectedIds.has(lucky.id)) {
+          if (this.users.length === 0) break;
+          index = Math.floor(Math.random() * this.users.length);
+          lucky = this.users.splice(index, 1)[0];
         }
-      })
-      console.log(lucky)
-      lucky.stop()
+
+        selectedIds.add(lucky.id);
+        lucky.el[0].style.zIndex = 100;
+        lucky.bang()
+        winners.push(lucky);
+      }
+
+      winners.forEach(function(winner) {
+        // winner.start()
+        $("#lucky-balls").append('<li><p class="NT">' + winner.NT + '</p><p class="name">' + winner.name + '</p></li>');
+      });
+      setTimeout(function() {
+        winners.forEach(function(winner) {
+          winner.moving = false;
+        });
+      }, 500);
       setTimeout(function() { // 开奖一段时间后，球体都变为静止
         users.forEach(function(user) {
           user.moving = false
         })
-      },500);
-      lucky.bang()
-      this.hit()
-      this.luckyUser = lucky
-      $("#reference").show()
+      },1500);
+      this.lotteryCompleted = true;
+      // this.hit()
+      this.luckyUser = winners;
+      $("#reference").show();
     },
 
     removeItem: function(item) {
@@ -384,8 +413,8 @@ define(function(require, exports, module) {
       }
     },
 
-    addItem: function(id,name,company, options) {
-      this.users.push(new User(id,name,company, options))
+    addItem: function(id,name,NT, options) {
+      this.users.push(new User(id,name,NT, options))
     },
 
     moveLucky: function() { // 已中奖的不会参与到之后的每一轮抽奖
