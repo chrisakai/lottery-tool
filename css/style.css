@@ -68,16 +68,8 @@ ul li {
   word-break: keep-all;
   cursor: pointer;
 }
-#balls li .NT,
-#lucky-balls li .NT{
+#balls li .name{
   font-size:12px;
-  line-height: 14px;
-  margin-bottom: 0;
-  margin-top: 1.2em;
-}
-#balls li .name,
-#lucky-balls li .name{
-  font-size:14px;
   line-height: 14px;
   margin-top: 5px;
 }
@@ -145,12 +137,17 @@ nav a {
   font-size: 20px;
 }
 
-#lucky-balls li .NT {
+#lucky-balls li .NT{
   font-weight: bold;
+  font-size:20px;
+  line-height: 14px;
+  margin-bottom: 0;
+  margin-top: 1.2em;
 }
-
-#lucky-balls li .name {
-  color: #555;
+#lucky-balls li .name{
+  font-size:20px;
+  line-height: 14px;
+  margin-top: 5px;
 }
 
 /*new*/
