@@ -43,6 +43,13 @@ ul li {
   position: relative;
 }
 
+#winners-container {
+  height: 300px; /* Set the desired height */
+  overflow-y: auto; /* Enable vertical scrolling */
+  border: 1px solid #ccc; /* Optional: Add a border for better visibility */
+  padding: 10px; /* Optional: Add padding */
+}
+
 #balls {
   padding: 0;
   margin: 0;

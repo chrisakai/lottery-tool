@@ -48,9 +48,8 @@ define(function(require, exports, module) {
     this.el = $('<li data-id='+ this.id +'><p class="name">' + this.name + '</p></li>').appendTo('#balls')
     this.width = this.el.width()
     this.height = this.el.height()
-    var colorList = ["#B5FF91","#94DBFF",
-      "#FFBAFF","#FFBD9D","#C7A3ED","#CC9898","#8AC007","#CCC007","#FFAD5C",
-    "#88ced7","#0da350","#711966","#ef8d35","#a17c5b"];
+    var colorList = ["#9e2896","#007bc0","#18837e","#00884a",
+    "#ffcf00","#00884a","#ed0007","#007bc0"];
     this.el[0].style.background = _util.getColorByRandom(colorList);
   }
 
