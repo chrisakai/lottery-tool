@@ -273,8 +273,7 @@ define(function(require, exports, module) {
 
       //guide屏的dom节点处理和事件绑定
       window.onload = function(){
-        var tpl = '<div class="lottery-guide" id="guide-container">' +
-        '<div class="guide-left" id="guide-left">' +
+        var tpl = "<div class=\"lottery-guide\" id=\"guide-container\"><div class=\"guide-left\" id=\"guide-left\">" +
         '</div>' +
         '<div class="guide-right" id="guide-right">' +
         '</div>' +
