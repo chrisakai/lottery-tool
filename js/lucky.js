@@ -9,7 +9,7 @@ define(function(require, exports, module) {
   const dataApper = require('./data/data-apper');
 
 // Convert the data to the desired format with multiple spaces between name and NT
-  const allPerson = dataApper.map(person => `${person.name}   ${person.NT}`).join(';');
+  const allPerson = dataApper.map(person => `${person.name} ${person.NT}`).join(';');
 
   //未中奖人员名单
   var remainPerson = allPerson.toString().split(";");
@@ -55,6 +55,8 @@ define(function(require, exports, module) {
   }
 
   function move() {
+    timers.forEach(timer => clearInterval(timer));
+    timers = [];
     const inputs = document.querySelectorAll('input[id^="showName"]');
     if (inputs.length > remainPerson.length) {
       alert(`当前剩余${remainPerson.length}人，请重新设置奖项个数`);
@@ -80,8 +82,11 @@ define(function(require, exports, module) {
   }
 
   function resetRemainPerson() {
-    remainPerson = allPerson.toString().split(";");
+    remainPerson = allPerson.split(';');
     luckyMan.clear();
+    document.querySelectorAll('input[id^="showName"]').forEach(input => {
+      input.value = "";
+    });
   }
 
   module.exports = {
