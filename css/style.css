@@ -59,7 +59,8 @@ body > div > section #luckyDrawing {
 body > div > section #luckyDrawing input {
   background-color: transparent;
   padding: 10px;
-  text-align: center;
+  width: auto;
+  min-width: 400px;
   border: none;
   font-size: 24px;
   color: #000;
