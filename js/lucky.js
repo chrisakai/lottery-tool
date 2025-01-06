@@ -5,7 +5,12 @@ define(function(require, exports, module) {
   var _util = require('./utils')
   var _lucky_list = require('./data/data-lucky')
   //抽奖人员名单
-  var allPerson= ""
+  // Assuming data-apper.js exports an array of objects with `name` and `NT` properties
+  const dataApper = require('./data/data-apper');
+
+// Convert the data to the desired format with multiple spaces between name and NT
+  const allPerson = dataApper.map(person => `${person.name}   ${person.NT}`).join(';');
+
   //未中奖人员名单
   var remainPerson = allPerson.toString().split(";");
   //中奖人员名单
@@ -14,8 +19,47 @@ define(function(require, exports, module) {
   let timers = [];
   let isRunning = false;
 
+  function stopScrollingSequentially() {
+    const inputs = document.querySelectorAll('input[id^="showName"]');
+    const displayedPeople = new Set(); // 使用 Set 保存当前显示的值
+    let currentIndex = 0;
+
+    function stopNextInput() {
+      if (currentIndex >= inputs.length) {
+        return; // 所有输入框停止后退出
+      }
+
+      const input = inputs[currentIndex];
+      const timer = timers[currentIndex];
+
+      // 检查当前值是否在 displayedPeople 中
+      if (!displayedPeople.has(input.value)) {
+        clearInterval(timer); // 停止当前定时器
+        displayedPeople.add(input.value); // 添加到已显示值集合
+
+        luckyMan.add(input.value); // 添加到中奖者集合
+        const index = remainPerson.indexOf(input.value);
+        if (index > -1) {
+          remainPerson.splice(index, 1); // 从剩余人群中移除
+        }
+
+        currentIndex++; // 移动到下一个输入框
+        stopNextInput(); // 递归停止下一个
+      } else {
+        // 延迟 500ms 再检查
+        setTimeout(stopNextInput, 300);
+      }
+    }
+
+    stopNextInput();
+  }
+
   function move() {
     const inputs = document.querySelectorAll('input[id^="showName"]');
+    if (inputs.length > remainPerson.length) {
+      alert(`当前剩余${remainPerson.length}人，请重新设置奖项个数`);
+      return;
+    }
     var interTime = 30;//设置间隔时间
     inputs.forEach((input, index) => {
       timers[index] = setInterval(() => {
@@ -25,7 +69,6 @@ define(function(require, exports, module) {
         }
         var i = GetRandomNum(0, remainPerson.length-1);
         input.value = remainPerson[i]; // Assign random value to input
-        remainPerson.splice(i, 1); // Remove the value from remainPerson
       }, interTime);
     });
   }
@@ -34,24 +77,6 @@ define(function(require, exports, module) {
     var Range = Max - Min;
     var Rand = Math.random();
     return (Min + Math.round(Rand * Range));
-  }
-
-  function User(id,name,NT, options) {
-    this.id = id
-    this.name = name
-    this.NT =  NT
-    this.options = options || {}
-    this.lucky = false
-  }
-
-  function stopScrollingAndAddToLuckyMan(displayedPeople) {
-    displayedPeople.forEach(person => {
-      luckyMan.add(person);
-      const index = remainPerson.indexOf(person);
-      if (index > -1) {
-        remainPerson.splice(index, 1);
-      }
-    });
   }
 
   function resetRemainPerson() {
@@ -65,18 +90,7 @@ define(function(require, exports, module) {
     init: function(data) {
       this.data = data
       this.lotteryCompleted = false;
-
       this._bindUI()
-      this.luckyCount = parseInt(document.querySelector("#num-lucky").value) || 1; // 默认抽取 1 人
-      //_util.setStore("ALLLUCKYDATA", _lucky_list) // 把lucky名单存入localStorage去
-      //var hasLuckyData = _util.getStore("HASLUCKYDATA")
-      //if (hasLuckyData) {
-      //  for (var i = 0; i < hasLuckyData.length; i++) {
-      //    if (hasLuckyData[i]) {
-      //      hasLuckyData[i].bang()
-      //    }
-      //  }
-      //}
     },
 
     _bindUI: function() {
@@ -103,14 +117,16 @@ define(function(require, exports, module) {
           trigger.innerHTML = trigger.getAttribute('data-text-stop')
           tag.setAttribute('data-action', 'stop')
           tag.innerHTML = tag.getAttribute('data-text-stop')
-          that.start()
+          move();
+          isRunning = true;
         }
         else {
           trigger.setAttribute('data-action', 'start')
           trigger.innerHTML = trigger.getAttribute('data-text-start')
           tag.setAttribute('data-action', 'start')
           tag.innerHTML = tag.getAttribute('data-text-start')
-          that.stop()
+          stopScrollingSequentially();
+          isRunning = false;
         }
       }
       function handle() {
@@ -128,10 +144,8 @@ define(function(require, exports, module) {
           trigger.setAttribute('data-action', 'start')
           trigger.innerHTML = trigger.getAttribute('data-text-start')
           timers.forEach(timer => clearInterval(timer));
+          stopScrollingSequentially();
           isRunning = false;
-          // Get displayed people and add to luckyMan
-          const displayedPeople = Array.from(document.querySelectorAll('input[id^="showName"]')).map(input => input.value);
-          stopScrollingAndAddToLuckyMan(displayedPeople);
         }
       }
 
@@ -155,90 +169,11 @@ define(function(require, exports, module) {
       // bind keydown
       document.addEventListener('keydown', function(ev) {
         if (ev.keyCode == '32') { // 空格键
-          if (isRunning) {
-            timers.forEach(timer => clearInterval(timer));
-            isRunning = false;
-            // Get displayed people and add to luckyMan
-            const displayedPeople = Array.from(document.querySelectorAll('input[id^="showName"]')).map(input => input.value);
-            stopScrollingAndAddToLuckyMan(displayedPeople);
-          } else {
-            move();
-            isRunning = true;
-          }
-        }
-        else if (ev.keyCode == '27') { // ESC按键
-          // that.moveLucky()
-          $('#lucky-balls li').eq(0).click()
-          $("#reference").hide()
+          go()
         }
       }, false)
 
     },
-
-    setHasLuckyData: function(item) {
-      //var arr = $('#lucky-balls').find('li')
-      var arr = []
-      var hasLuckyData = _util.getStore("HASLUCKYDATA")
-      if (hasLuckyData) {
-        for(var i=0;i<hasLuckyData.length;i++) {
-          arr.push(hasLuckyData[i])
-        }
-      }
-      arr.push(item)
-      _util.setStore("HASLUCKYDATA", arr) // 把开出来的名单存入localStorage
-      //if(arr){
-      // console.log(arr)
-      //  var temp = []
-      //  for(var i =0;i<arr.length;i++) {
-      //    temp.push(arr[i])
-      //    _util.setStore("HASLUCKYDATA", temp) // 把开出来的名单存入localStorage
-      //  }
-      //}
-    },
-  }
-
-
-  // Helpers
-
-  function r(from, to) {
-    from = from || 0
-    to = to || 1
-    return Math.floor(Math.random() * (to - from + 1) + from)
-  }
-
-  function getOffset(a, b) {
-    return Math.sqrt((a.x - b.x) * (a.x - b.x) + (a.y - b.y) * (a.y - b.y));
-  }
-
-  function isOverlap(a, b) {
-    return getOffset(a, b) <= (a.width + b.width) / 2
-  }
-
-  function hit(a, b) {
-    var yOffset = b.y - a.y
-    var xOffset = b.x - a.x
-
-    var offset = getOffset(a, b)
-
-    var power = Math.ceil(((a.width + b.width) / 2 - offset) / RIGIDITY)
-    var yStep = yOffset > 0 ? Math.ceil(power * yOffset / offset) : Math.floor(power * yOffset / offset)
-    var xStep = xOffset > 0 ? Math.ceil(power * xOffset / offset) : Math.floor(power * xOffset / offset)
-
-    if (a.lucky) {
-      b._xMove += xStep * 2
-      b._yMove += yStep * 2
-    }
-    else if (b.lucky) {
-      a._xMove += xStep * -2
-      a._yMove += yStep * -2
-    }
-    else {
-      a._yMove += -1 * yStep
-      b._yMove += yStep
-
-      a._xMove += -1 * xStep
-      b._xMove += xStep
-    }
   }
 
 })
