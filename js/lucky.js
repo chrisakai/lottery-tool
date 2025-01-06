@@ -4,165 +4,67 @@ define(function(require, exports, module) {
   require('./easing')
   var _util = require('./utils')
   var _lucky_list = require('./data/data-lucky')
-  // canvas画布宽高
-  var CANVAS_HEIGHT = 500
-  var CANVAS_WIDTH = 900
-  // 球体宽高
-  var BALL_WIDTH = 60
-  var BALL_HEIGHT = 60
-  // 中奖球体宽高和层级
-  var LUCKY_BALL_WIDTH = 200
-  var LUCKY_BALL_HEIGHT = 200
-  var MAX_ZINDEX = 100
+  //抽奖人员名单
+  var allPerson= ""
+  //未中奖人员名单
+  var remainPerson = allPerson.toString().split(";");
+  //中奖人员名单
+  var luckyMan = new Set();
 
-  var DURATION_MIN = 100
-  var DURATION_MAX = 500
-  var ZOOM_DURATION = 500
-  var HIT_SPEED = 100 //球体速度
+  let timers = [];
+  let isRunning = false;
 
-  var RIGIDITY = 6 // 弹性系数：2 -钢球 4 - 橡胶球，越大越软，建议小于 10
+  function move() {
+    const inputs = document.querySelectorAll('input[id^="showName"]');
+    var interTime = 30;//设置间隔时间
+    inputs.forEach((input, index) => {
+      timers[index] = setInterval(() => {
+        if (remainPerson.length === 0) {
+          clearInterval(timers[index]);
+          return;
+        }
+        var i = GetRandomNum(0, remainPerson.length-1);
+        input.value = remainPerson[i]; // Assign random value to input
+        remainPerson.splice(i, 1); // Remove the value from remainPerson
+      }, interTime);
+    });
+  }
+
+  function GetRandomNum(Min, Max) {
+    var Range = Max - Min;
+    var Rand = Math.random();
+    return (Min + Math.round(Rand * Range));
+  }
 
   function User(id,name,NT, options) {
     this.id = id
     this.name = name
     this.NT =  NT
     this.options = options || {}
-
-    this.el = null
-    this.width = 0
-    this.height = 0
-    this.left = 0
-    this.top = 0
-    this.x = 0
-    this.y = 0
-
-    this.moving = false
     this.lucky = false
-    this.zooming = false
-
-    this.createEl()
-    this.move()
   }
 
-  User.prototype.createEl = function() {
-    this.el = $('<li data-id='+ this.id +'><p class="name">' + this.name + '</p></li>').appendTo('#balls')
-    this.width = this.el.width()
-    this.height = this.el.height()
-    var colorList = ["#9e2896","#007bc0","#18837e","#00884a",
-    "#ffcf00","#00884a","#ed0007","#007bc0"];
-    this.el[0].style.background = _util.getColorByRandom(colorList);
+  function stopScrollingAndAddToLuckyMan(displayedPeople) {
+    displayedPeople.forEach(person => {
+      luckyMan.add(person);
+      const index = remainPerson.indexOf(person);
+      if (index > -1) {
+        remainPerson.splice(index, 1);
+      }
+    });
   }
 
-  User.prototype.move = function(callback) {
-    this.left = r(0, CANVAS_WIDTH - this.width)
-    this.top = r(0, CANVAS_HEIGHT - this.height)
-    this.zIndex = r(0, MAX_ZINDEX)
-
-    this.reflow(callback)
+  function resetRemainPerson() {
+    remainPerson = allPerson.toString().split(";");
+    luckyMan.clear();
   }
-
-  User.prototype.reflow = function(callback, direct) {
-    this.x = this.left + this.width / 2
-    this.y = this.top + this.height / 2
-    this.el[0].style.zIndex = this.zIndex
-
-    if (direct) {
-      this.el[0].style.left = this.left
-      this.el[0].style.top = this.top
-    }
-    else {
-      this.el.animate({
-        'left': this.left,
-        'top': this.top
-      }, r(DURATION_MIN, DURATION_MAX), 'easeOutBack', callback)
-
-    }
-  }
-
-  User.prototype.start = function() {
-    this.reset()
-    this.moving = true
-    this.autoMove()
-  }
-
-  User.prototype.reset = function() {
-    this.el.stop(true, true)
-    this.zooming = false
-    this.lucky = false
-
-    this.el[0].className = ''
-    this.el[0].style.width = BALL_WIDTH + 'px'
-    this.el[0].style.height = BALL_HEIGHT + 'px'
-    this.width = this.el.width()
-    this.height = this.el.height()
-
-    this._maxTop = CANVAS_HEIGHT - this.height
-    this._maxLeft = CANVAS_WIDTH - this.width
-  }
-
-  User.prototype.autoMove = function() {
-    var that = this
-
-    if (this.moving) {
-      this.move(function() {
-        that.autoMove()
-      })
-    }
-  }
-
-  User.prototype.stop = function() {
-    this.el.stop(true, true)
-    this.moving = false
-  }
-
-  User.prototype.bang = function() {
-    var that = this
-
-    this.lucky = true
-    this.el[0].className = 'selected'
-    this.width = LUCKY_BALL_WIDTH
-    this.height = LUCKY_BALL_HEIGHT
-    this.left = (CANVAS_WIDTH - this.width) / 2
-    this.top = (CANVAS_HEIGHT - this.height) / 2
-
-    this.zooming = true
-    this.el.animate({
-      'left': this.left,
-      'top': this.top,
-      'width': this.width,
-      'height': this.height,
-      'z-index': 100
-    }, ZOOM_DURATION, function() {
-      that.zooming = false
-    })
-  }
-
-  User.prototype.beginHit = function() {
-    this._xMove = 0
-    this._yMove = 0
-  }
-
-  User.prototype.hitMove = function() {
-    this.left += this._xMove
-    this.top += this._yMove
-
-    this.top = this.top < 0 ? 0 : (this.top > this._maxTop ? this._maxTop : this.top)
-    this.left = this.left < 0 ? 0 : (this.left > this._maxLeft ? this._maxLeft : this.left)
-
-    this.reflow(null, false)
-  }
-
 
   module.exports = {
 
-    users: [],
     lotteryCompleted: false,
     init: function(data) {
       this.data = data
       this.lotteryCompleted = false;
-      this.users = data.map(function(item) {
-        return new User(item.id,item.name,item.NT);
-      })
 
       this._bindUI()
       this.luckyCount = parseInt(document.querySelector("#num-lucky").value) || 1; // 默认抽取 1 人
@@ -185,8 +87,6 @@ define(function(require, exports, module) {
         var value = parseInt(e.target.value);
         if (value < 1) {
           e.target.value = 1;
-        } else if (value > users.length) {
-          e.target.value = users.length;
         }
       });
       // bind button
@@ -219,90 +119,21 @@ define(function(require, exports, module) {
           tag.innerHTML = tag.getAttribute('data-text-stop')
           trigger.setAttribute('data-action', 'stop')
           trigger.innerHTML = trigger.getAttribute('data-text-stop')
-          that.start()
+          move();
+          isRunning = true;
         }
         else {
           tag.setAttribute('data-action', 'start')
           tag.innerHTML = tag.getAttribute('data-text-start')
           trigger.setAttribute('data-action', 'start')
           trigger.innerHTML = trigger.getAttribute('data-text-start')
-          that.stop()
+          timers.forEach(timer => clearInterval(timer));
+          isRunning = false;
+          // Get displayed people and add to luckyMan
+          const displayedPeople = Array.from(document.querySelectorAll('input[id^="showName"]')).map(input => input.value);
+          stopScrollingAndAddToLuckyMan(displayedPeople);
         }
       }
-
-      // bind #lucky-balls
-      $('#lucky-balls').on('click', 'li', function(e) {
-        var el = $(e.target)
-        var id = el.data("id")
-        console.log(id)
-        var name = ""
-        var NT = ""
-        var options = {}
-        that.data.forEach(function(user) {
-          if(user.id == id) {
-            options = user
-            name = user.name
-            NT = user.NT
-          }
-        })
-        console.log(options)
-        if (!options) {
-          that.addItem(id,name,NT, options)
-          that.hit()
-          el.remove()
-        }
-      })
-
-      // bind #balls
-      $('#balls').on('click', 'li', function(e) {
-        var el = $(e.target)
-        var id = el.data("id")
-
-        for (var i = 0; i < that.users.length; i++) {
-          var user = that.users[i]
-
-          if (user.id === id) {
-            that.moveLucky()
-            if (that.luckyUser !== user) {
-              that.setLucky(user)
-            }
-            break
-          }
-        }
-      })
-
-      //guide屏的dom节点处理和事件绑定
-      window.onload = function(){
-        var tpl = "<div class=\"lottery-guide\" id=\"guide-container\"><div class=\"guide-left\" id=\"guide-left\">" +
-        '</div>' +
-        '<div class="guide-right" id="guide-right">' +
-        '</div>' +
-        '<div class="guide-text"></div>' +
-        '<div class="guide-btn" id="guide-btn"></div>' +
-        '</div>';
-        var tag = getStore("HASCLICK");
-        if(tag) {
-          //$("#guide-container").remove()
-        }else{
-          $("body").append(tpl);
-          $("#guide-btn").on("click",function(e){
-            e.preventDefault()
-            $("#guide-left").animate({left:"-100%"},"1500","linear");
-            $("#guide-right").animate({right:"-100%"},"1500","linear");
-            $("#guide-container").animate({opacity:"0"},"1000","linear");
-            setTimeout(function(){
-              $("#guide-container").remove()
-            },1500);
-            _util.setStore("HASCLICK",true)
-          });
-        }
-      };
-
-      // bind event
-      $("#back").on("click", function(){
-        _util.removeStore("HASCLICK");
-        window.location.reload();
-      });
 
       // Update the JavaScript in lucky.js
       document.getElementById('go').addEventListener('click', function() {
@@ -312,10 +143,28 @@ define(function(require, exports, module) {
         });
       });
 
+      // Bind reset button
+      document.getElementById('reset').addEventListener('click', function() {
+        if (confirm('是否确认重置？')) {
+          resetRemainPerson();
+          const inputs = document.querySelectorAll('input[id^="showName"]');
+          inputs.forEach(input => input.value = '');
+        }
+      });
+
       // bind keydown
       document.addEventListener('keydown', function(ev) {
         if (ev.keyCode == '32') { // 空格键
-          go()
+          if (isRunning) {
+            timers.forEach(timer => clearInterval(timer));
+            isRunning = false;
+            // Get displayed people and add to luckyMan
+            const displayedPeople = Array.from(document.querySelectorAll('input[id^="showName"]')).map(input => input.value);
+            stopScrollingAndAddToLuckyMan(displayedPeople);
+          } else {
+            move();
+            isRunning = true;
+          }
         }
         else if (ev.keyCode == '27') { // ESC按键
           // that.moveLucky()
@@ -324,107 +173,6 @@ define(function(require, exports, module) {
         }
       }, false)
 
-      // 绑定点击抽奖事件
-      //$("#handle").on("click",function(){
-      //  handle()
-      //});
-      $("#sure").on("click",function(){
-        that.moveLucky()
-        $('#lucky-balls li').eq(0).click()
-        $("#reference").hide()
-      })
-    },
-
-    start: function() {
-      if(this.lotteryCompleted) {
-        alert("抽奖结束！请重置后再抽奖。")
-        return;
-      }
-
-      $("#reference").hide()
-      this.timer && clearTimeout(this.timer)
-      this.moveLucky() // 开始新的一轮抽奖先把已中奖的用户排除
-
-      this.users.forEach(function(user) {
-        user.start()
-      })
-    },
-
-    stop: function() {
-      if(this.lotteryCompleted) {
-        alert("抽奖结束！请重置后再抽奖。")
-        return;
-      }
-      var users = this.users;
-      if(users&&users.length==0){
-        alert("抽奖结束！谢谢参与~");
-        return
-      }
-      var lucky = users[0];
-      var ram = r(0, users.length-1) // 随机数
-      var numWinners = parseInt(document.getElementById('num-lucky').value, 10);
-      var winners = [];
-      var selectedIds = new Set();
-      for (var i = 0; i < numWinners; i++) {
-        if (this.users.length === 0) break;
-        var index = Math.floor(Math.random() * this.users.length);
-        var lucky = this.users.splice(index, 1)[0];
-        // Ensure no duplicates
-        while (selectedIds.has(lucky.id)) {
-          if (this.users.length === 0) break;
-          index = Math.floor(Math.random() * this.users.length);
-          lucky = this.users.splice(index, 1)[0];
-        }
-
-        selectedIds.add(lucky.id);
-        lucky.el[0].style.zIndex = 100;
-        lucky.bang()
-        winners.push(lucky);
-      }
-
-      winners.forEach(function(winner) {
-        // winner.start()
-        $("#lucky-balls").append('<li><p class="NT">' + winner.NT + '</p><p class="name">' + winner.name + '</p></li>');
-      });
-      setTimeout(function() {
-        winners.forEach(function(winner) {
-          winner.moving = false;
-        });
-      }, 500);
-      setTimeout(function() { // 开奖一段时间后，球体都变为静止
-        users.forEach(function(user) {
-          user.moving = false
-        })
-      },1500);
-      this.lotteryCompleted = true;
-      // this.hit()
-      this.luckyUser = winners;
-      $("#reference").show();
-    },
-
-    removeItem: function(item) {
-      for (var i = 0; i < this.users.length; i++) {
-        var user = this.users[i]
-        if (user.id === item.id) {
-          this.users.splice(i, 1)
-        }
-      }
-    },
-
-    addItem: function(id,name,NT, options) {
-      this.users.push(new User(id,name,NT, options))
-    },
-
-    moveLucky: function() { // 已中奖的不会参与到之后的每一轮抽奖
-      var luckyUser = this.luckyUser
-      if (luckyUser) {
-        luckyUser.el[0].style.cssText = ''
-        //luckyUser.el.prependTo('#lucky-balls') // 被选元素的开头（仍位于内部）插入指定内容
-        luckyUser.el.appendTo('#lucky-balls') // 被选元素的结尾（仍位于内部）插入指定内容
-        this.removeItem(luckyUser)
-        this.luckyUser = null
-        this.setHasLuckyData(luckyUser)
-      }
     },
 
     setHasLuckyData: function(item) {
@@ -447,44 +195,6 @@ define(function(require, exports, module) {
       //  }
       //}
     },
-
-    setLucky: function(item) {
-      this.users.forEach(function(user) {
-        user.stop()
-      })
-      this.luckyUser = item
-      item.bang()
-      this.hit()
-    },
-
-    hit: function() {
-      var that = this
-      var hitCount = 0
-      var users = this.users
-
-      users.forEach(function(user) {
-        user.beginHit()
-      })
-
-      for (var i = 0; i < users.length; i++) {
-        for (var j = i + 1; j < users.length; j++) {
-          if (isOverlap(users[i], users[j])) {
-            hit(users[i], users[j])
-            hitCount++
-          }
-        }
-      }
-
-      users.forEach(function(user) {
-        user.hitMove()
-      })
-
-      if (hitCount > 0) {
-        this.timer = setTimeout(function() {
-          that.hit()
-        }, HIT_SPEED)
-      }
-    }
   }
 
 

@@ -22,20 +22,14 @@
     <!--[if lt IE 10]>
     <p class="browsehappy">您的浏览器太老了，请到<a href="http://browsehappy.com/">下载一个新版浏览器</a>。</p>
     <![endif]-->
-    <nav class="menu">
-      <li><a href="reset.html">设置</a></li>
-      <li><a href="help.html">帮助</a></li>
-      <li><a href="javascript:void(0)" id="back">返回</a></li>
-    </nav>
     <!--抽奖开始和抽奖结束备用按钮-->
     <nav class="aside-menu">
       <li>
-        <div class="handle" id="handle" data-text-start="开始" data-text-stop="停止" data-action="start">
+        <div class="handle" id="reset">
+          重置
         </div>
-      </li>
       <li>
-        <div class="handle" id="sure">
-          确定
+        <div class="handle" id="handle" data-text-start="开始" data-text-stop="停止" data-action="start">
         </div>
       </li>
     </nav>
@@ -46,18 +40,12 @@
       <label for="num-lucky">抽奖人数：</label>
       <input type="number" id="num-lucky" value="1" min="1" max="10" />
     </div>
-    <div class="main-container">
-      <!--中奖list-->
-      <div id="winners-container">
-        <div class="lottery-title">中奖名单:</div>
-        <ul id="lucky-balls"></ul>
-      </div>
-      <div id="container">
-        <ul id="balls">
-          <div class="reference" id="reference"></div>
-        </ul>
-      </div>
-    </div>
+<!--    <div class="main-container" id="main-container">-->
+<!--      <input id="showName" readonly type="text">-->
+<!--    </div>-->
+    <section>
+      <div id="luckyDrawing"><input id="showName" readonly type="text"></div>
+    </section>
 
     <!--抽奖按钮
     <div class="lottery-btn">抽奖</div>-->
@@ -65,6 +53,29 @@
   </div>
     <script src="js/sea.js"></script>
     <script>
+      document.getElementById("num-lucky").addEventListener("change", function() {
+        const numLucky = parseInt(this.value, 10);
+        const container = document.getElementById("luckyDrawing");
+        container.innerHTML = ''; // Clear existing text boxes
+
+        for (let i = 0; i < numLucky; i++) {
+          const textBox = document.createElement("input");
+          textBox.type = "text";
+          textBox.className = "text-box";
+          textBox.id = "showName" + (i + 1); // Assign unique IDs
+          textBox.placeholder = "Bosch"; // Set placeholder
+          container.appendChild(textBox);
+        }
+      });
+      function removeStore(name) {
+        if (!name) return
+        try {
+          window.localStorage.removeItem(name);
+        }catch (e) {
+          alert("操作失败！请重新操作~")
+        }
+
+      }
       function getStore(name) {
         if (!name) return;
         var value;
