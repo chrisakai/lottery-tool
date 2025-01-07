@@ -154,14 +154,6 @@ define(function(require, exports, module) {
         }
       }
 
-      // Update the JavaScript in lucky.js
-      document.getElementById('go').addEventListener('click', function() {
-        var winners = Lucky.start();
-        winners.forEach(function(winner) {
-          $("#lucky-balls").append('<li><p class="NT">' + winner.NT + '</p><p class="name">' + winner.name + '</p></li>');
-        });
-      });
-
       // Bind reset button
       document.getElementById('reset').addEventListener('click', function() {
         if (confirm('是否确认重置？')) {

@@ -67,6 +67,21 @@
           container.appendChild(textBox);
         }
       });
+      // 禁用键盘输入，只允许拨动数字
+      document.getElementById("num-lucky").addEventListener("keydown", function(e) {
+        if (
+                !['ArrowUp', 'ArrowDown', 'Tab', 'Backspace', 'Delete'].includes(e.key) &&
+                !(e.ctrlKey && (e.key === 'c' || e.key === 'v')) // 允许复制和粘贴
+        ) {
+          e.preventDefault();
+        }
+      });
+
+      // 禁用粘贴功能（可选）
+      document.getElementById("num-lucky").addEventListener("paste", function(e) {
+        e.preventDefault();
+      });
+
       function removeStore(name) {
         if (!name) return
         try {
