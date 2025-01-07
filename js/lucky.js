@@ -2,8 +2,6 @@ define(function(require, exports, module) {
   // 引入依赖文件
   var $ = require('./jquery')
   require('./easing')
-  var _util = require('./utils')
-  var _lucky_list = require('./data/data-lucky')
   //抽奖人员名单
   // Assuming data-apper.js exports an array of objects with `name` and `NT` properties
   const dataApper = require('./data/data-apper');
@@ -113,42 +111,25 @@ define(function(require, exports, module) {
       var tag = document.querySelector("#handle");
       trigger.innerHTML = trigger.getAttribute('data-text-start')
       tag.innerHTML = tag.getAttribute('data-text-start')
-      trigger.addEventListener('click', go, false)
-      tag.addEventListener('click', handle, false)
+      trigger.addEventListener('click', toggleLottery, false)
+      tag.addEventListener('click', toggleLottery, false)
 
-      function go() {
+      function toggleLottery() {
+        const trigger = document.querySelector('#go');
+        const tag = document.querySelector("#handle");
+
         if (trigger.getAttribute('data-action') === 'start') {
-          trigger.setAttribute('data-action', 'stop')
-          trigger.innerHTML = trigger.getAttribute('data-text-stop')
-          tag.setAttribute('data-action', 'stop')
-          tag.innerHTML = tag.getAttribute('data-text-stop')
+          trigger.setAttribute('data-action', 'stop');
+          trigger.innerHTML = trigger.getAttribute('data-text-stop');
+          tag.setAttribute('data-action', 'stop');
+          tag.innerHTML = tag.getAttribute('data-text-stop');
           move();
           isRunning = true;
-        }
-        else {
-          trigger.setAttribute('data-action', 'start')
-          trigger.innerHTML = trigger.getAttribute('data-text-start')
-          tag.setAttribute('data-action', 'start')
-          tag.innerHTML = tag.getAttribute('data-text-start')
-          stopScrollingSequentially();
-          isRunning = false;
-        }
-      }
-      function handle() {
-        if (tag.getAttribute('data-action') === 'start') {
-          tag.setAttribute('data-action', 'stop')
-          tag.innerHTML = tag.getAttribute('data-text-stop')
-          trigger.setAttribute('data-action', 'stop')
-          trigger.innerHTML = trigger.getAttribute('data-text-stop')
-          move();
-          isRunning = true;
-        }
-        else {
-          tag.setAttribute('data-action', 'start')
-          tag.innerHTML = tag.getAttribute('data-text-start')
-          trigger.setAttribute('data-action', 'start')
-          trigger.innerHTML = trigger.getAttribute('data-text-start')
-          timers.forEach(timer => clearInterval(timer));
+        } else {
+          trigger.setAttribute('data-action', 'start');
+          trigger.innerHTML = trigger.getAttribute('data-text-start');
+          tag.setAttribute('data-action', 'start');
+          tag.innerHTML = tag.getAttribute('data-text-start');
           stopScrollingSequentially();
           isRunning = false;
         }
@@ -166,7 +147,7 @@ define(function(require, exports, module) {
       // bind keydown
       document.addEventListener('keydown', function(ev) {
         if (ev.keyCode == '32') { // 空格键
-          go()
+          toggleLottery();
         }
       }, false)
 
