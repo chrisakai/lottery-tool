@@ -63,7 +63,11 @@ body > div > section #luckyDrawing input {
   min-width: 400px;
   border: none;
   font-size: 24px;
-  color: #000;
+  color: white;
+}
+
+body > div > section #luckyDrawing input::placeholder {
+  color: white;
 }
 
 #container {
